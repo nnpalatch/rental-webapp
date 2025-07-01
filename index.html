@@ -1,0 +1,110 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Rental Manager</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; margin: 0; }
+    .hidden { display: none; }
+    .btn { padding: 10px; margin: 5px; width: 100%; max-width: 300px; }
+    input, select { display: block; margin: 10px 0; width: 100%; padding: 8px; }
+    .room { border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
+    .expired { background-color: #fdd; }
+  </style>
+</head>
+<body>
+  <h1>Rental Manager</h1>
+  <div id="homePage">
+    <button class="btn" onclick="goTo('loginPage')">Login</button>
+    <button class="btn" onclick="goTo('addRoomPage')">Add Room</button>
+    <button class="btn" onclick="goTo('allRoomPage'); showRooms()">All Room</button>
+  </div>
+
+  <div id="loginPage" class="hidden">
+    <h2>Login</h2>
+    <input type="text" id="username" placeholder="Username"/>
+    <input type="password" id="password" placeholder="Password"/>
+    <button class="btn" onclick="login()">Login</button>
+  </div>
+
+  <div id="addRoomPage" class="hidden">
+    <h2>Add Room</h2>
+    <input id="roomNo" placeholder="Room Number">
+    <input id="houseNo" placeholder="House No.">
+    <input id="startDate" type="date">
+    <input id="endDate" type="date">
+    <input id="rent" type="number" placeholder="Monthly Rent">
+    <input id="dueDate" type="number" placeholder="Due Day (e.g., 5)">
+    <button class="btn" onclick="saveRoom()">Save</button>
+  </div>
+
+  <div id="allRoomPage" class="hidden">
+    <h2>All Rooms</h2>
+    <div id="roomList"></div>
+  </div>
+
+  <script>
+    const goTo = (id) => {
+      document.querySelectorAll("body > div").forEach(div => div.classList.add("hidden"));
+      document.getElementById(id).classList.remove("hidden");
+    };
+
+    const login = () => {
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+      if (user === 'admin' && pass === '0000') {
+        localStorage.setItem("loggedIn", "true");
+        goTo('homePage');
+      } else {
+        alert("Login failed");
+      }
+    };
+
+    if (localStorage.getItem("loggedIn") === "true") {
+      goTo('homePage');
+    } else {
+      goTo('loginPage');
+    }
+
+    const saveRoom = () => {
+      let rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+      const room = {
+        id: Date.now(),
+        roomNo: document.getElementById('roomNo').value,
+        houseNo: document.getElementById('houseNo').value,
+        startDate: document.getElementById('startDate').value,
+        endDate: document.getElementById('endDate').value,
+        rent: document.getElementById('rent').value,
+        dueDate: document.getElementById('dueDate').value,
+        payments: [],
+        expenses: []
+      };
+      rooms.push(room);
+      localStorage.setItem('rooms', JSON.stringify(rooms));
+      alert("Room saved!");
+    };
+
+    const showRooms = () => {
+      const container = document.getElementById('roomList');
+      container.innerHTML = '';
+      let rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+      const today = new Date();
+      rooms.forEach(room => {
+        const endDate = new Date(room.endDate);
+        const isExpiring = (endDate - today) / (1000 * 60 * 60 * 24 * 30) <= 3;
+        const div = document.createElement('div');
+        div.className = 'room' + (isExpiring ? ' expired' : '');
+        div.innerHTML = `
+          <b>Room:</b> ${room.roomNo}<br/>
+          <b>House No:</b> ${room.houseNo}<br/>
+          <b>Contract:</b> ${room.startDate} to ${room.endDate}<br/>
+          <b>Rent:</b> ${room.rent} ฿ (Due every ${room.dueDate})<br/>
+        `;
+        container.appendChild(div);
+      });
+    };
+  </script>
+</body>
+</html>
